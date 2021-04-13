@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: that
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: GitRepository
+metadata:
+  name: github-demo
+  namespace: that
+spec:
+  interval: 1m
+  url: https://github.com/rgarcia6520/fluxv2-helm-guestbook-demo.git
+  ref:
+    branch: main
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: environment
+  namespace: that
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: github-demo
+  path: ./prod
+  prune: true

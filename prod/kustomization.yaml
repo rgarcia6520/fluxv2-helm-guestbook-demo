@@ -1,0 +1,19 @@
+bases:
+- https://github.com/argoproj/argocd-example-apps/helm-guestbook?ref=master
+
+configMapGenerator:
+  - name: common
+    behavior: merge
+    files:
+      - values.yaml=configmap.yaml
+
+patchesStrategicMerge:
+- |-
+  apiVersion: source.toolkit.fluxcd.io/v1beta1
+  kind: GitRepository
+  metadata:
+    name: that
+  spec:
+    ref:
+      $patch: replace
+      semver: "master"
