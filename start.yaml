@@ -6,23 +6,70 @@ metadata:
 apiVersion: source.toolkit.fluxcd.io/v1beta1
 kind: GitRepository
 metadata:
-  name: github-demo
+  name: argoproj-examples
   namespace: that
 spec:
   interval: 1m
-  url: https://github.com/rgarcia6520/fluxv2-helm-guestbook-demo.git
+  url: https://github.com/argoproj/argocd-example-apps.git
   ref:
-    branch: main
+    branch: master
 ---
-apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
-kind: Kustomization
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
 metadata:
-  name: environment
+  name: helm-guestbook
   namespace: that
 spec:
-  interval: 1m
-  sourceRef:
-    kind: GitRepository
-    name: github-demo
-  path: ./prod
-  prune: true
+  targetNamespace: that
+  chart:
+    spec:
+      chart: helm-guestbook
+      interval: 2m
+      sourceRef:
+        kind: GitRepository
+        name: argoproj-examples
+        namespace: that
+
+  interval: 5m
+  test:
+    enable: false
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+      remediateLastFailure: true
+    cleanupOnFail: true
+  rollback:
+    timeout: 5m
+    cleanupOnFail: false
+
+  valuesFrom:
+    - name: helm-guestbook-values
+      kind: Secret
+      valuesKey: defaults
+
+  values:
+    image:
+      repository: gcr.io/heptio-images/ks-guestbook-demo
+      tag: 0.1
+      pullPolicy: IfNotPresent
+
+    service:
+      type: ClusterIP
+      port: 80
+
+    resources: {}
+      # limits:
+      #  cpu: 100m
+      #  memory: 128Mi
+      # requests:
+      #  cpu: 100m
+      #  memory: 128Mi
+
+    nodeSelector: {}
+
+    tolerations: []
+
+    affinity: {}
